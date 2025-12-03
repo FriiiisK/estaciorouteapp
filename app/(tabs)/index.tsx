@@ -1,98 +1,271 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+type Item = {
+  nome: string;
+  quantidade: number;
+};
 
-export default function HomeScreen() {
+export default function Index() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [quantidadeEditada, setQuantidadeEditada] = useState('');
+  const [itemEditIndex, setItemEditIndex] = useState<number | null>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      async function loadItems() {
+        try {
+          const stored = await AsyncStorage.getItem('@itens');
+          if (stored) {
+            setItems(JSON.parse(stored));
+          } else {
+            setItems([]);
+          }
+        } catch (error) {
+          console.log('Erro ao carregar itens:', error);
+        }
+      }
+      loadItems();
+    }, [])
+  );
+
+  function deletarItem(index: number) { // FUNCÃO PARA DELETAR O ITEM DA LISTA 
+    Alert.alert(
+      'Confirmação',
+      'Tem certeza que deseja excluir este item?',
+      [
+        {
+          text: 'Cancelar',
+          onPress: () => console.log('Cancelado'),
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          onPress: () => {
+            const novaLista = [...items];
+            novaLista.splice(index, 1);
+            setItems(novaLista);
+            AsyncStorage.setItem('@itens', JSON.stringify(novaLista));
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  }
+
+  function abrirModalEditar(index: number) { 
+    setItemEditIndex(index);
+    setQuantidadeEditada('');
+    setModalVisible(true);
+  }
+
+  async function alterarQuantidade(tipo: 'adicionar' | 'remover') { 
+    if (!quantidadeEditada.trim() || isNaN(Number(quantidadeEditada))) {
+      alert('Digite uma quantidade válida');
+      return;
+    }
+    if (itemEditIndex === null) return;
+
+    const valor = Number(quantidadeEditada);
+    const novaLista = [...items];
+    const atual = novaLista[itemEditIndex].quantidade;
+
+    let novaQuantidade = tipo === 'adicionar' ? atual + valor : atual - valor;
+    if (novaQuantidade < 0) novaQuantidade = 0;
+
+    novaLista[itemEditIndex].quantidade = novaQuantidade;
+
+    setItems(novaLista);
+    await AsyncStorage.setItem('@itens', JSON.stringify(novaLista));
+
+    setModalVisible(false);
+    setItemEditIndex(null);
+    setQuantidadeEditada('');
+  }
+
+  function renderItem({ item, index }: { item: Item; index: number }) {
+    return (
+      <View style={styles.itemBox}>
+        <Text style={styles.itemText}>
+          <Text style={styles.itemLabel}>Item: </Text>
+          {item.nome}
+        </Text>
+        <View style={styles.direitaBox}>
+          <Text style={styles.itemText}>
+            <Text style={styles.itemLabel}>Quantidade: </Text>
+            {item.quantidade}
+          </Text>
+          <TouchableOpacity onPress={() => abrirModalEditar(index)} style={styles.iconButton}>
+            <Ionicons name="pencil" size={24} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => deletarItem(index)} style={styles.iconButton}>
+            <Ionicons name="trash" size={24} color="black" />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      <FlatList
+        data={items}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={renderItem}
+        contentContainerStyle={styles.listContent}
+      />
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Editar Quantidade</Text>
+            <TextInput
+              style={styles.modalInput}
+              value={quantidadeEditada}
+              onChangeText={setQuantidadeEditada}
+              keyboardType="numeric"
+              autoFocus
+              placeholder="Digite a quantidade"
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#008000' }]}
+                onPress={() => alterarQuantidade('adicionar')}
+              >
+                <Text style={[styles.modalButtonText, { color: '#fff' }]}>Adicionar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: '#800000' }]}
+                onPress={() => alterarQuantidade('remover')}
+              >
+                <Text style={[styles.modalButtonText, { color: '#fff' }]}>Remover</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
+const styles = StyleSheet.create({ // style mantendo as cores da route
+  container: {
+    flex: 1,
+    backgroundColor: '#fffde7',
+    padding: 20,
+    alignItems: 'center',
+  },
+  listContent: {
+    paddingBottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  itemBox: {
+    backgroundColor: '#f7e709ff',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 12,
+    width: '90%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+  },
+  direitaBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  iconButton: {
+    marginLeft: 10,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  itemLabel: {
+    fontSize: 14,
+    color: '#000000cc',
+    fontWeight: '600',
+  },
+  itemText: {
+    fontSize: 16,
+    color: '#000000ff',
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    width: '85%',
+    backgroundColor: '#f7e709ff',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#000000ff',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#000000aa',
+    borderRadius: 8,
+    height: 50,
+    paddingHorizontal: 15,
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#000000ff',
+    backgroundColor: '#fff',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  modalButton: {
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    alignItems: 'center',
+    minWidth: 90,
+  },
+  modalButtonText: {
+    fontWeight: '700',
+    fontSize: 16,
   },
 });
