@@ -42,7 +42,7 @@ export default function Index() {
     }, [])
   );
 
-  function deletarItem(index: number) { // FUNCÃO PARA DELETAR O ITEM DA LISTA 
+  function deletarItem(index: number) {
     Alert.alert(
       'Confirmação',
       'Tem certeza que deseja excluir este item?',
@@ -66,13 +66,13 @@ export default function Index() {
     );
   }
 
-  function abrirModalEditar(index: number) { 
+  function abrirModalEditar(index: number) {
     setItemEditIndex(index);
     setQuantidadeEditada('');
     setModalVisible(true);
   }
 
-  async function alterarQuantidade(tipo: 'adicionar' | 'remover') { 
+  async function alterarQuantidade(tipo: 'adicionar' | 'remover') {
     if (!quantidadeEditada.trim() || isNaN(Number(quantidadeEditada))) {
       alert('Digite uma quantidade válida');
       return;
@@ -99,15 +99,17 @@ export default function Index() {
   function renderItem({ item, index }: { item: Item; index: number }) {
     return (
       <View style={styles.itemBox}>
-        <Text style={styles.itemText}>
-          <Text style={styles.itemLabel}>Item: </Text>
-          {item.nome}
-        </Text>
-        <View style={styles.direitaBox}>
+        <View style={styles.itemTextContainer}>
+          <Text style={styles.itemText}>
+            <Text style={styles.itemLabel}>Item: </Text>
+            {item.nome}
+          </Text>
           <Text style={styles.itemText}>
             <Text style={styles.itemLabel}>Quantidade: </Text>
             {item.quantidade}
           </Text>
+        </View>
+        <View style={styles.direitaBox}>
           <TouchableOpacity onPress={() => abrirModalEditar(index)} style={styles.iconButton}>
             <Ionicons name="pencil" size={24} color="black" />
           </TouchableOpacity>
@@ -174,7 +176,7 @@ export default function Index() {
   );
 }
 
-const styles = StyleSheet.create({ // style mantendo as cores da route
+const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fffde7',
@@ -201,12 +203,9 @@ const styles = StyleSheet.create({ // style mantendo as cores da route
     shadowOpacity: 0.2,
     shadowRadius: 1.5,
   },
-  direitaBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconButton: {
-    marginLeft: 10,
+  itemTextContainer: {
+    flex: 1,
+    marginRight: 15, // Para não encostar nos ícones
   },
   itemLabel: {
     fontSize: 14,
@@ -216,6 +215,14 @@ const styles = StyleSheet.create({ // style mantendo as cores da route
   itemText: {
     fontSize: 16,
     color: '#000000ff',
+    marginBottom: 5,
+  },
+  direitaBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    marginLeft: 10,
   },
 
   modalBackground: {
