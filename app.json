@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "teste2",
+    "name": "ROUTE MERCADINHO",
     "slug": "teste2",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logoroute.png",
     "scheme": "teste2",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
