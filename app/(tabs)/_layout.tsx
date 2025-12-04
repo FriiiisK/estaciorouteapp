@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Image, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'; // Importando o safearea para corrigir problema dos botões encima do navigation
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TabsLayout() {
   return (
-    <SafeAreaView style={{ flex: 1 }}> 
+    <SafeAreaView style={{ flex: 1 }}>
       <Tabs
         screenOptions={({ route }) => ({
           headerShown: true,
@@ -22,7 +22,7 @@ export default function TabsLayout() {
             height: 70,
           },
 
-          tabBarIcon: ({ color, size, focused }) => {
+          tabBarIcon: ({ color }) => {
             let iconName: keyof typeof Ionicons.glyphMap;
             const IconSize = 35;
 
@@ -49,7 +49,7 @@ function HeaderCustomizado() {
   return (
     <View style={styles.headerContainer}>
       <Image
-        source={require('../../src/assets/logoroute.png')}
+        source={require('../../assets/images/logoroute.png')} // 
         style={styles.logo}
         resizeMode="contain"
       />
@@ -57,7 +57,7 @@ function HeaderCustomizado() {
   );
 }
 
-const styles = StyleSheet.create({ // style mantendo a cor da route
+const styles = StyleSheet.create({
   headerContainer: {
     height: 70,
     backgroundColor: '#f7e709ff',
